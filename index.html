@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glossy Touch - İkon Boyutlandırıcı</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: radial-gradient(circle at 10% 20%, #0a0f1a 0%, #03060c 100%);
+            font-family: system-ui, 'Segoe UI', sans-serif;
+            color: #eee;
+            margin: 0;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(20, 25, 40, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            padding: 1.8rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff, #88aaff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .file-area {
+            background: rgba(0,0,0,0.3);
+            border-radius: 24px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px dashed rgba(255,255,255,0.4);
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .file-area:hover {
+            background: rgba(0,0,0,0.5);
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .preview {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .preview img {
+            max-width: 150px;
+            border-radius: 16px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .dimension-section {
+            margin: 1.5rem 0;
+        }
+        .dimension-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        .dimension-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dimension-item label {
+            flex: 1;
+            font-size: 0.85rem;
+        }
+        .custom-dim {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .custom-dim input {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 30px;
+            padding: 0.4rem 0.8rem;
+            color: white;
+            width: 100px;
+        }
+        .name-prefix {
+            margin: 1rem 0;
+        }
+        .name-prefix input {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 30px;
+            padding: 0.4rem 0.8rem;
+            color: white;
+            width: 200px;
+        }
+        button {
+            background: #2c6e9e;
+            border: none;
+            border-radius: 40px;
+            padding: 0.6rem 1.5rem;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 1rem;
+        }
+        button:hover {
+            background: #1e4f72;
+            transform: scale(0.98);
+        }
+        .status {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+        hr {
+            margin: 1.2rem 0;
+            border-color: rgba(255,255,255,0.1);
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>📱 İkon Boyutlandırıcı (PWA Hazırlık)</h1>
+    <p>Tek bir görsel seçin, istediğiniz boyutları işaretleyin, ZIP olarak indirin.</p>
+
+    <div class="file-area" id="fileArea">
+        <div>📂 Görsel yüklemek için tıklayın veya sürükleyin</div>
+        <input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+    </div>
+
+    <div class="preview" id="previewArea" style="display: none;">
+        <img id="previewImg" alt="Önizleme">
+    </div>
+
+    <div class="dimension-section">
+        <strong>🎯 Boyutlar (px) – birden çok seçebilirsiniz</strong>
+        <div class="dimension-grid" id="dimensionCheckboxes">
+            <!-- ön tanımlı boyutlar -->
+        </div>
+        <div class="custom-dim">
+            <input type="number" id="customW" placeholder="Genişlik" value="">
+            <span style="font-size:1.2rem;">×</span>
+            <input type="number" id="customH" placeholder="Yükseklik" value="">
+            <button type="button" id="addCustomBtn">➕ Ekle</button>
+        </div>
+    </div>
+
+    <div class="name-prefix">
+        <strong>🏷️ İsimlendirme</strong><br>
+        <input type="text" id="namePrefix" placeholder="Ön ek (örnek: icon)" value="icon">
+        <span style="margin-left: 8px; font-size:0.8rem;">Sonuç: önek-72x72.png, önek-96x96.png ...</span>
+    </div>
+
+    <button id="downloadBtn">📦 ZIP Olarak İndir</button>
+    <div class="status" id="statusMsg"></div>
+    <hr>
+    <small>Not: PNG formatında kaydedilir. SVG dosyaları rasterize edilir. ZIP içinde tüm boyutlar ayrı ayrı bulunur.</small>
+</div>
+
+<script>
+    // Ön tanımlı boyutlar (PWA için yaygın)
+    const defaultSizes = [
+        { w: 72, h: 72, label: "72x72" },
+        { w: 96, h: 96, label: "96x96" },
+        { w: 128, h: 128, label: "128x128" },
+        { w: 144, h: 144, label: "144x144" },
+        { w: 152, h: 152, label: "152x152" },
+        { w: 192, h: 192, label: "192x192" },
+        { w: 384, h: 384, label: "384x384" },
+        { w: 512, h: 512, label: "512x512" }
+    ];
+
+    let selectedImage = null;   // store the image file
+    let imageElement = null;     // Image object for drawing
+    let customSizes = [];        // array of {w,h,label}
+
+    // DOM references
+    const fileArea = document.getElementById('fileArea');
+    const imageInput = document.getElementById('imageInput');
+    const previewArea = document.getElementById('previewArea');
+    const previewImg = document.getElementById('previewImg');
+    const dimensionGrid = document.getElementById('dimensionCheckboxes');
+    const customW = document.getElementById('customW');
+    const customH = document.getElementById('customH');
+    const addCustomBtn = document.getElementById('addCustomBtn');
+    const namePrefixInput = document.getElementById('namePrefix');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const statusMsg = document.getElementById('statusMsg');
+
+    // Render checkboxes for dimensions
+    function renderDimensionCheckboxes() {
+        let html = '';
+        // default sizes
+        defaultSizes.forEach(size => {
+            const checked = (size.w === 72 && size.h === 72) ? 'checked' : ''; // 72x72 seçili başlasın
+            html += `
+                <div class="dimension-item">
+                    <input type="checkbox" class="dim-check" data-w="${size.w}" data-h="${size.h}" ${checked}>
+                    <label>${size.label}</label>
+                </div>
+            `;
+        });
+        // custom sizes
+        customSizes.forEach((size, idx) => {
+            html += `
+                <div class="dimension-item">
+                    <input type="checkbox" class="dim-check" data-w="${size.w}" data-h="${size.h}" checked>
+                    <label>${size.label}</label>
+                    <button type="button" class="remove-custom" data-idx="${idx}" style="background: rgba(200,60,60,0.8); border:none; border-radius:20px; padding:2px 8px; font-size:0.7rem;">✖</button>
+                </div>
+            `;
+        });
+        dimensionGrid.innerHTML = html;
+        // attach remove events
+        document.querySelectorAll('.remove-custom').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                customSizes.splice(idx, 1);
+                renderDimensionCheckboxes();
+            });
+        });
+    }
+
+    // Add custom size
+    addCustomBtn.addEventListener('click', () => {
+        let w = parseInt(customW.value);
+        let h = parseInt(customH.value);
+        if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) {
+            statusMsg.innerText = 'Lütfen geçerli genişlik ve yükseklik girin.';
+            return;
+        }
+        const label = `${w}x${h}`;
+        // avoid duplicate
+        const exists = customSizes.some(s => s.w === w && s.h === h);
+        if (exists) {
+            statusMsg.innerText = 'Bu boyut zaten listede.';
+            return;
+        }
+        customSizes.push({ w, h, label });
+        renderDimensionCheckboxes();
+        customW.value = '';
+        customH.value = '';
+        statusMsg.innerText = `Eklendi: ${label}`;
+    });
+
+    // Handle file selection
+    function handleFile(file) {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            statusMsg.innerText = 'Lütfen bir resim dosyası seçin (PNG, JPEG, WEBP, SVG).';
+            return;
+        }
+        selectedImage = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                imageElement = img;
+                previewImg.src = e.target.result;
+                previewArea.style.display = 'block';
+                statusMsg.innerText = `Görsel yüklendi: ${img.width}x${img.height}`;
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    fileArea.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+    // Drag and drop
+    fileArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileArea.style.background = 'rgba(0,0,0,0.5)';
+    });
+    fileArea.addEventListener('dragleave', () => {
+        fileArea.style.background = '';
+    });
+    fileArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileArea.style.background = '';
+        const file = e.dataTransfer.files[0];
+        if (file) handleFile(file);
+    });
+
+    // Resize function using canvas
+    function resizeImage(img, width, height) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(blob => resolve(blob), 'image/png');
+        });
+    }
+
+    // Download all selected dimensions as ZIP
+    downloadBtn.addEventListener('click', async () => {
+        if (!imageElement) {
+            statusMsg.innerText = 'Lütfen önce bir görsel yükleyin.';
+            return;
+        }
+        const checkboxes = document.querySelectorAll('.dim-check:checked');
+        if (checkboxes.length === 0) {
+            statusMsg.innerText = 'En az bir boyut seçin.';
+            return;
+        }
+        const prefix = namePrefixInput.value.trim() || 'icon';
+        statusMsg.innerText = 'Görseller hazırlanıyor...';
+        const zip = new JSZip();
+        let processed = 0;
+        const total = checkboxes.length;
+        const promises = [];
+
+        for (const cb of checkboxes) {
+            const w = parseInt(cb.dataset.w);
+            const h = parseInt(cb.dataset.h);
+            const promise = resizeImage(imageElement, w, h).then(blob => {
+                const fileName = `${prefix}-${w}x${h}.png`;
+                zip.file(fileName, blob);
+                processed++;
+                statusMsg.innerText = `${processed}/${total} boyut işlendi...`;
+            });
+            promises.push(promise);
+        }
+        await Promise.all(promises);
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(zipBlob);
+        link.download = `${prefix}-icons.zip`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        statusMsg.innerText = 'İndirme tamamlandı!';
+    });
+
+    // Initial render
+    renderDimensionCheckboxes();
+</script>
+</body>
+</html>
