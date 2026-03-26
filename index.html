@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glossy Touch - İkon Boyutlandırıcı</title>
+    <title>Glossy Touch - İkon Boyutlandırıcı (Gelişmiş)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -16,7 +16,7 @@
             padding: 2rem 1rem;
         }
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
             background: rgba(20, 25, 40, 0.7);
             backdrop-filter: blur(12px);
@@ -61,23 +61,50 @@
         .dimension-section {
             margin: 1.5rem 0;
         }
+        .dimension-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+        .dimension-header button {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 30px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
         .dimension-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 0.8rem;
-            margin-top: 0.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 0.6rem;
+            margin-top: 0.8rem;
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 0.3rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 24px;
         }
         .dimension-item {
             background: rgba(255,255,255,0.1);
             border-radius: 20px;
-            padding: 0.5rem;
+            padding: 0.4rem 0.3rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+        }
+        .dimension-item input {
+            margin: 0;
+            width: 1rem;
+            height: 1rem;
         }
         .dimension-item label {
             flex: 1;
-            font-size: 0.85rem;
+            cursor: pointer;
         }
         .custom-dim {
             margin-top: 1rem;
@@ -103,7 +130,7 @@
             border-radius: 30px;
             padding: 0.4rem 0.8rem;
             color: white;
-            width: 200px;
+            width: 250px;
         }
         button {
             background: #2c6e9e;
@@ -129,12 +156,21 @@
             margin: 1.2rem 0;
             border-color: rgba(255,255,255,0.1);
         }
+        .remove-custom {
+            background: rgba(200,60,60,0.8);
+            border: none;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            color: white;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 <div class="container">
-    <h1>📱 İkon Boyutlandırıcı (PWA Hazırlık)</h1>
+    <h1>📱 Gelişmiş İkon Boyutlandırıcı (PWA + Platformlar)</h1>
     <p>Tek bir görsel seçin, istediğiniz boyutları işaretleyin, ZIP olarak indirin.</p>
 
     <div class="file-area" id="fileArea">
@@ -147,15 +183,21 @@
     </div>
 
     <div class="dimension-section">
-        <strong>🎯 Boyutlar (px) – birden çok seçebilirsiniz</strong>
+        <div class="dimension-header">
+            <strong>🎯 Boyutlar (px) – birden çok seçebilirsiniz</strong>
+            <div>
+                <button id="selectAllBtn">Tümünü Seç</button>
+                <button id="clearAllBtn">Temizle</button>
+            </div>
+        </div>
         <div class="dimension-grid" id="dimensionCheckboxes">
-            <!-- ön tanımlı boyutlar -->
+            <!-- Ön tanımlı boyutlar buraya eklenecek -->
         </div>
         <div class="custom-dim">
             <input type="number" id="customW" placeholder="Genişlik" value="">
             <span style="font-size:1.2rem;">×</span>
             <input type="number" id="customH" placeholder="Yükseklik" value="">
-            <button type="button" id="addCustomBtn">➕ Ekle</button>
+            <button type="button" id="addCustomBtn">➕ Özel Ekle</button>
         </div>
     </div>
 
@@ -172,23 +214,40 @@
 </div>
 
 <script>
-    // Ön tanımlı boyutlar (PWA için yaygın)
+    // Genişletilmiş ön tanımlı boyutlar (PWA, iOS, Android, Windows için yaygın)
     const defaultSizes = [
-        { w: 72, h: 72, label: "72x72" },
-        { w: 96, h: 96, label: "96x96" },
-        { w: 128, h: 128, label: "128x128" },
-        { w: 144, h: 144, label: "144x144" },
-        { w: 152, h: 152, label: "152x152" },
-        { w: 192, h: 192, label: "192x192" },
-        { w: 384, h: 384, label: "384x384" },
-        { w: 512, h: 512, label: "512x512" }
+        { w: 16, h: 16, label: "16x16" },    // favicon
+        { w: 24, h: 24, label: "24x24" },    // status bar
+        { w: 32, h: 32, label: "32x32" },    // favicon
+        { w: 48, h: 48, label: "48x48" },    // Android
+        { w: 57, h: 57, label: "57x57" },    // iOS old
+        { w: 60, h: 60, label: "60x60" },    // iOS
+        { w: 64, h: 64, label: "64x64" },    // Windows
+        { w: 72, h: 72, label: "72x72" },    // Android / Chrome
+        { w: 76, h: 76, label: "76x76" },    // iOS
+        { w: 80, h: 80, label: "80x80" },    // Windows
+        { w: 96, h: 96, label: "96x96" },    // Android / Chrome
+        { w: 100, h: 100, label: "100x100" }, // Windows
+        { w: 120, h: 120, label: "120x120" }, // iOS
+        { w: 128, h: 128, label: "128x128" }, // Chrome Web Store
+        { w: 144, h: 144, label: "144x144" }, // Microsoft Store
+        { w: 152, h: 152, label: "152x152" }, // iPad
+        { w: 167, h: 167, label: "167x167" }, // iPad Pro
+        { w: 180, h: 180, label: "180x180" }, // iPhone
+        { w: 192, h: 192, label: "192x192" }, // Android / Chrome
+        { w: 196, h: 196, label: "196x196" }, // Android
+        { w: 256, h: 256, label: "256x256" }, // Windows
+        { w: 320, h: 320, label: "320x320" }, // Windows
+        { w: 384, h: 384, label: "384x384" }, // Android / Chrome
+        { w: 512, h: 512, label: "512x512" }, // PWA / Play Store
+        { w: 1024, h: 1024, label: "1024x1024" } // Mac App Store
     ];
 
-    let selectedImage = null;   // store the image file
-    let imageElement = null;     // Image object for drawing
-    let customSizes = [];        // array of {w,h,label}
+    let selectedImage = null;
+    let imageElement = null;
+    let customSizes = [];
 
-    // DOM references
+    // DOM referansları
     const fileArea = document.getElementById('fileArea');
     const imageInput = document.getElementById('imageInput');
     const previewArea = document.getElementById('previewArea');
@@ -200,13 +259,15 @@
     const namePrefixInput = document.getElementById('namePrefix');
     const downloadBtn = document.getElementById('downloadBtn');
     const statusMsg = document.getElementById('statusMsg');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
 
-    // Render checkboxes for dimensions
     function renderDimensionCheckboxes() {
         let html = '';
-        // default sizes
+        // ön tanımlı boyutlar
         defaultSizes.forEach(size => {
-            const checked = (size.w === 72 && size.h === 72) ? 'checked' : ''; // 72x72 seçili başlasın
+            // 72x72 varsayılan seçili olsun
+            const checked = (size.w === 72 && size.h === 72) ? 'checked' : '';
             html += `
                 <div class="dimension-item">
                     <input type="checkbox" class="dim-check" data-w="${size.w}" data-h="${size.h}" ${checked}>
@@ -214,7 +275,7 @@
                 </div>
             `;
         });
-        // custom sizes
+        // özel boyutlar
         customSizes.forEach((size, idx) => {
             html += `
                 <div class="dimension-item">
@@ -225,7 +286,8 @@
             `;
         });
         dimensionGrid.innerHTML = html;
-        // attach remove events
+
+        // kaldır butonlarına event ekle
         document.querySelectorAll('.remove-custom').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = parseInt(btn.dataset.idx);
@@ -235,7 +297,15 @@
         });
     }
 
-    // Add custom size
+    // Tümünü seç / temizle
+    function selectAllCheckboxes(select) {
+        const checkboxes = document.querySelectorAll('.dim-check');
+        checkboxes.forEach(cb => cb.checked = select);
+    }
+    selectAllBtn.addEventListener('click', () => selectAllCheckboxes(true));
+    clearAllBtn.addEventListener('click', () => selectAllCheckboxes(false));
+
+    // Özel boyut ekle
     addCustomBtn.addEventListener('click', () => {
         let w = parseInt(customW.value);
         let h = parseInt(customH.value);
@@ -244,7 +314,6 @@
             return;
         }
         const label = `${w}x${h}`;
-        // avoid duplicate
         const exists = customSizes.some(s => s.w === w && s.h === h);
         if (exists) {
             statusMsg.innerText = 'Bu boyut zaten listede.';
@@ -257,7 +326,7 @@
         statusMsg.innerText = `Eklendi: ${label}`;
     });
 
-    // Handle file selection
+    // Dosya yükleme işlemleri (aynı)
     function handleFile(file) {
         if (!file) return;
         if (!file.type.startsWith('image/')) {
@@ -283,7 +352,7 @@
     imageInput.addEventListener('change', (e) => {
         if (e.target.files.length) handleFile(e.target.files[0]);
     });
-    // Drag and drop
+    // Sürükle bırak
     fileArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         fileArea.style.background = 'rgba(0,0,0,0.5)';
@@ -298,7 +367,7 @@
         if (file) handleFile(file);
     });
 
-    // Resize function using canvas
+    // Resim boyutlandırma
     function resizeImage(img, width, height) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
@@ -310,7 +379,7 @@
         });
     }
 
-    // Download all selected dimensions as ZIP
+    // İndirme
     downloadBtn.addEventListener('click', async () => {
         if (!imageElement) {
             statusMsg.innerText = 'Lütfen önce bir görsel yükleyin.';
@@ -349,7 +418,7 @@
         statusMsg.innerText = 'İndirme tamamlandı!';
     });
 
-    // Initial render
+    // İlk render
     renderDimensionCheckboxes();
 </script>
 </body>
